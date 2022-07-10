@@ -167,7 +167,8 @@ notify_unplugged() {
             then
                 bus_num="$(printf %03d $bus_num)"
                 dev_num="$(printf %03d $dev_num)"
-                dev_title="$(echo "$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num"|grep '^Device:\|bInterfaceClass\|bInterfaceSubClass\|bInterfaceProtocol'|\
+                dev_title="$(echo "$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num"|\
+                             grep '^Device:\|bInterfaceClass\|bInterfaceSubClass\|bInterfaceProtocol'|\
                              sed 's/bInterface//g'|sed 's/^\s*\([a-zA-Z]\+\):*\s*[0-9]*\s*/<b>\1:<\/b> /'|\
                              awk 1 ORS='###')###<b>Bus</b> '$bus_num' <b>Device</b> '$dev_num'")"
                 dev_name="$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num"|grep 'idProduct'|tr -s ' '|cut -d' ' -f4-)"
@@ -183,9 +184,9 @@ notify_unplugged() {
          fi
          ;;
       remove )
-         dev_title="$(grep "$dev_path " "$devlist_file"|grep 'title="'|sed 's/.*title=\"\(.*\)\".*/\1/g'|uniq|sort)"
-         dev_name="$(grep "$dev_path " "$devlist_file"|grep 'name="'|sed 's/.*name=\"\(.*\)\".*/\1/g'|uniq|sort)"
-         grep -v "$dev_path " "$devlist_file" > "$devlist_file"_tmp && \
+         dev_title="$(grep "$dev_path " "$devlist_file"|grep 'title="'|sed 's/.*title=\"\(.*\)\".*/\1/g'|tail -1)"
+         dev_name="$(grep "$dev_path " "$devlist_file"|grep 'name="'|sed 's/.*name=\"\(.*\)\".*/\1/g'|tail -1)"
+         grep -v "$dev_path " "$devlist_file" > "$devlist_file"_tmp
          mv "$devlist_file"_tmp "$devlist_file"
          if [ "$dev_title" != "" ]
             then
