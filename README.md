@@ -19,7 +19,7 @@ git clone https://github.com/VHSgunzo/udev-notify.git
 ```
 cd udev-notify
 ```
-* **Compile the code**
+* **Install udev-notify**
 ```
 make install
 ```
