@@ -1,6 +1,6 @@
 # udev-notify - Show notifications when any USB device is plugged/unplugged
 
-VERSION := 0.1.r1
+VERSION := 0.1.r4
 
 INSTALL	:= install
 RM	:= rm
