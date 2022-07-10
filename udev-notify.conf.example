@@ -1,0 +1,23 @@
+#default config path: /etc/udev-notify.conf
+# whether or not show visual notification (by libnotify)
+show_notifications=true
+
+# whether to add icons to notifications (should roughly match type of plugged device)
+notification_icons=true
+
+# whether or not play sound/speech notifications
+play_sounds=true
+
+# when enabled, instead of playing the sounds specified below,
+# the espeak speech synthesizer will be used to announce
+# a message, e.g. "Device plugged: USB Hub"
+use_espeak=false
+
+# path to plug sound
+plug_sound_path="/opt/my-udev-notify/sounds/plug_sound.wav"
+
+# path to unplug sound
+unplug_sound_path="/opt/my-udev-notify/sounds/unplug_sound.wav"
+
+# path to the file where device list is stored
+devlist_file="/var/tmp/udev-notify-devices"

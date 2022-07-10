@@ -1,0 +1,2 @@
+ACTION=="add",    RUN+="/bin/bash /usr/bin/udev-notify -a add    -p '%p' -b '$attr{busnum}' -d '$attr{devnum}'"
+ACTION=="remove", RUN+="/bin/bash /usr/bin/udev-notify -a remove -p '%p' -b '$attr{busnum}' -d '$attr{devnum}'"

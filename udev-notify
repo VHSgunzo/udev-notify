@@ -1,0 +1,196 @@
+#!/bin/bash
+
+un_dir="/usr/share/udev-notify"
+devlist_file="/var/tmp/udev-notify-devices"
+lock_file="/var/lock/.udev-notify-devices.lock"
+plug_sound_path="$un_dir/sounds/plug_sound.wav"
+unplug_sound_path="$un_dir/sounds/unplug_sound.wav"
+config_file="/etc/udev-notify.conf"
+
+show_notifications="true"
+notification_icons="true"
+play_sounds="true"
+use_espeak="false"
+
+if [ -f "$config_file" ]
+   then
+       source "$config_file"
+fi
+
+while getopts a:p:b:d: opt
+   do
+      case "$opt" in
+         a) action=$OPTARG ;;
+         p) dev_path=$OPTARG ;;
+         b) bus_num=$OPTARG ;;
+         d) dev_num=$OPTARG ;;
+      esac
+done
+shift $((OPTIND - 1))
+
+get_device_icon() {
+   local dev_data="$(echo "$1"|sed 's/###/\n/g'|grep -e '>Class' -A 2 -m 1|cut -d' ' -f2-|tr -s ' ' '_')"
+   IFS=$'\n' local dev_array=($dev_data)
+   local class="${dev_array[0]}"
+   local subclass="${dev_array[1]}"
+   local protocol="${dev_array[2]}"
+   case "$class:$subclass:$protocol" in
+      Audio:* )
+         dev_icon="audio-card"
+      ;;
+      Communications:Abstract* )
+         dev_icon="network-modem"
+      ;;
+      Communications:Ethernet* )
+         dev_icon="network-wired"
+      ;;
+      Human_Interface_Device:*:Keyboard )
+         dev_icon="input-keyboard"
+      ;;
+      Human_Interface_Device:*:Mouse )
+         dev_icon="input-mouse"
+      ;;
+      Mass_Storage:RBC:* )
+         dev_icon="drive-removable-media-usb"
+      ;;
+      Mass_Storage:Floppy:* )
+         dev_icon="media-floppy"
+      ;;
+      Mass_Storage:SCSI:* )
+         dev_icon="drive-removable-media-usb"
+      ;;
+      Printer:* )
+         dev_icon="printer"
+      ;;
+      Hub:* )
+         dev_icon="emblem-shared"
+      ;;
+      Video:* )
+         dev_icon="camera-web"
+      ;;
+      Xbox:Controller:* )
+         dev_icon="input-gaming"
+      ;;
+      Wireless:Radio_Frequency:Bluetooth )
+         dev_icon="network-bluetooth"
+      ;;
+      *) dev_icon="drive-removable-media-usb" ;;
+   esac
+}
+
+show_visual_notification() {
+   local header="$1"
+   local dev_name="$2"
+   local text="$3"
+   if [ "$notification_icons" == "true" ]
+      then
+          get_device_icon "$text"
+      else
+          dev_icon=""
+   fi
+   text="$(echo "$text"|sed 's/###/\n/g')"
+   declare -a logged_users=($(print_logged_users))
+   for (( i=0; i<${#logged_users[@]}; i=($i + 1) ))
+      do
+         cur_user="${logged_users[$i]}"
+         cur_user_id="$(id -u "$cur_user")"
+         export XDG_RUNTIME_DIR="/run/user/$cur_user_id"
+         export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$cur_user_id/bus"
+         export DISPLAY="$(who|grep "$cur_user"|grep 'tty' -m1|grep -o '(.*)$'|sed 's/(//;s/)//')"
+         export XAUTHORITY="/home/$cur_user/.Xauthority"
+         su "$cur_user" -c "notify-send -i '$dev_icon' -a '$header' '$dev_name' '$text'"
+   done
+}
+
+print_logged_users() {
+   who|grep "(.*)"|sed 's/^\s*\(\S\+\).*/\1/g'|uniq|sort
+}
+
+sound_or_speak() {
+   local soundfile="$1"
+   local speaktext="$2"
+   declare -a logged_users=($(print_logged_users))
+   for (( i=0; i<${#logged_users[@]}; i=($i + 1) ))
+      do
+         cur_user="${logged_users[$i]}"
+         if [ "$use_espeak" == "true" ]
+            then
+                if [[ -f "/bin/espeak" && "$speaktext" != "" ]]
+                   then
+                       su "$cur_user" -c "/bin/espeak '$speaktext'"
+                fi
+            else
+                if [[ -f "/bin/play" && -f "$soundfile" ]]
+                   then
+                       su "$cur_user" -c "/bin/play -q '$soundfile'"
+                fi
+         fi
+   done
+}
+
+notify_plugged() {
+   local dev_title="$1"
+   local dev_name="$2"
+   if [ "$show_notifications" == "true" ]
+      then
+          show_visual_notification "Device plugged" "$dev_name" "$dev_title"
+   fi
+
+   if [ "$play_sounds" == "true" ]
+      then
+          sound_or_speak "$plug_sound_path" "Device plugged: $dev_name"
+   fi
+}
+
+notify_unplugged() {
+   local dev_title="$1"
+   local dev_name="$2"
+   if [ "$show_notifications" == "true" ]
+      then
+          show_visual_notification "Device unplugged" "$dev_name" "$dev_title"
+   fi
+
+   if [ "$play_sounds" == "true" ]
+      then
+          sound_or_speak "$unplug_sound_path" "Device unplugged: $dev_name"
+   fi
+}
+
+(
+   flock -w 10 200 || exit 1
+   case "$action" in
+      reboot )
+         rm -rf "$devlist_file"
+         ;;
+      add )
+         if [[ "$bus_num" != "" && "$dev_num" != "" ]]
+            then
+                bus_num="$(printf %03d $bus_num)"
+                dev_num="$(printf %03d $dev_num)"
+                dev_title="$(echo "$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num"|grep '^Device:\|bInterfaceClass\|bInterfaceSubClass\|bInterfaceProtocol'|\
+                             sed 's/bInterface//g'|sed 's/^\s*\([a-zA-Z]\+\):*\s*[0-9]*\s*/<b>\1:<\/b> /'|\
+                             awk 1 ORS='###')###<b>Bus</b> '$bus_num' <b>Device</b> '$dev_num'")"
+                dev_name="$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num"|grep 'idProduct'|tr -s ' '|cut -d' ' -f4-)"
+                escaped_dev_path="$(echo "$dev_path"|sed 's/[\/&*.^$]/\\\&/g')"
+                sed -i "s#^\([0-9]\{3\}:\)\{2\}\($escaped_dev_path\)#$bus_num:$dev_num:$dev_path#" "$devlist_file"
+                existing_dev_on_bus_cnt="$(cat "$devlist_file"|grep "^$bus_num:$dev_num:"|awk 'END {print NR}')"
+                if [ "$existing_dev_on_bus_cnt" == "0" ]
+                   then
+                       echo "$bus_num:$dev_num:$dev_path title=\"$dev_title\"" >> "$devlist_file"
+                       echo "$bus_num:$dev_num:$dev_path name=\"$dev_name\"" >> "$devlist_file"
+                       notify_plugged "$dev_title" "$dev_name"
+                fi
+         fi
+         ;;
+      remove )
+         dev_title="$(grep "$dev_path " "$devlist_file"|grep 'title="'|sed 's/.*title=\"\(.*\)\".*/\1/g'|uniq|sort)"
+         dev_name="$(grep "$dev_path " "$devlist_file"|grep 'name="'|sed 's/.*name=\"\(.*\)\".*/\1/g'|uniq|sort)"
+         grep -v "$dev_path " "$devlist_file" > "$devlist_file"_tmp && \
+         mv "$devlist_file"_tmp "$devlist_file"
+         if [ "$dev_title" != "" ]
+            then
+                notify_unplugged "$dev_title" "$dev_name"
+         fi
+         ;;
+   esac
+) 200>"$lock_file"
