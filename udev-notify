@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.2.r0
+# v0.2.r1
 un_dir="/usr/share/udev-notify"
 icon_dir="$un_dir/icons"
 sounds_dir="$un_dir/sounds"

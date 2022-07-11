@@ -12,7 +12,7 @@ sox
 espeak-ng
 sed
 coreutils
-awk
+gawk
 grep
 util-linux
 bash
