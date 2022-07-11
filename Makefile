@@ -1,19 +1,20 @@
 # udev-notify - Show notifications when any USB device is plugged/unplugged
 
-VERSION := 0.1.r5
+VERSION := 0.2.r0
 
 INSTALL	:= install
 RM	:= rm
+LS	:= ls
 
 install:
-	$(RM) -rf $(DESTDIR)/usr/bin/udev-notify
-	$(RM) -rf $(DESTDIR)/usr/share/udev-notify
-	$(RM) -rf $(DESTDIR)/usr/share/licenses/udev-notify
-	$(RM) -rf $(DESTDIR)/etc/udev/rules.d/99-udev-notify.rules
 	$(INSTALL) -Dm755 udev-notify $(DESTDIR)/usr/bin/udev-notify
 	$(INSTALL) -Dm644 LICENSE $(DESTDIR)/usr/share/licenses/udev-notify/LICENSE
-	$(INSTALL) -Dm644 sounds/plug_sound.wav $(DESTDIR)/usr/share/udev-notify/sounds/plug_sound.wav
-	$(INSTALL) -Dm644 sounds/unplug_sound.wav $(DESTDIR)/usr/share/udev-notify/sounds/unplug_sound.wav
+	for ICON in $$($(LS) icons) ; do \
+	$(INSTALL) -Dm644 icons/$$ICON $(DESTDIR)/usr/share/udev-notify/icons/$$ICON ; \
+	done
+	for SOUND in $$($(LS) sounds) ; do \
+	$(INSTALL) -Dm644 sounds/$$SOUND $(DESTDIR)/usr/share/udev-notify/sounds/$$SOUND ; \
+	done
 	$(INSTALL) -Dm644 99-udev-notify.rules $(DESTDIR)/etc/udev/rules.d/99-udev-notify.rules
 
 uninstall:

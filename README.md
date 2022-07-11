@@ -6,9 +6,16 @@
 
 ## Dependences:
 ```
+usbutils
 libnotify
 sox
 espeak-ng
+sed
+coreutils
+awk
+grep
+util-linux
+bash
 ```
 ## To get started:
 * **Download the latest revision**

@@ -1,4 +1,4 @@
-#default config path: /etc/udev-notify.conf
+# default config path: /etc/udev-notify.conf
 # whether or not show visual notification (by libnotify)
 show_notifications=true
 
@@ -14,10 +14,10 @@ play_sounds=true
 use_espeak=false
 
 # path to plug sound
-plug_sound_path="/opt/my-udev-notify/sounds/plug_sound.wav"
+plug_sound_path="/opt/udev-notify/sounds/plug_sound.wav"
 
 # path to unplug sound
-unplug_sound_path="/opt/my-udev-notify/sounds/unplug_sound.wav"
+unplug_sound_path="/opt/udev-notify/sounds/unplug_sound.wav"
 
 # path to the file where device list is stored
 devlist_file="/var/tmp/udev-notify-devices"

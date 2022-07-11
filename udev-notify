@@ -1,10 +1,12 @@
 #!/bin/bash
-
+# v0.2.r0
 un_dir="/usr/share/udev-notify"
+icon_dir="$un_dir/icons"
+sounds_dir="$un_dir/sounds"
 devlist_file="/var/tmp/udev-notify-devices"
 lock_file="/var/lock/.udev-notify-devices.lock"
-plug_sound_path="$un_dir/sounds/plug_sound.wav"
-unplug_sound_path="$un_dir/sounds/unplug_sound.wav"
+plug_sound_path="$sounds_dir/plug_sound.wav"
+unplug_sound_path="$sounds_dir/unplug_sound.wav"
 config_file="/etc/udev-notify.conf"
 
 show_notifications="true"
@@ -36,45 +38,45 @@ get_device_icon() {
    local protocol="${dev_array[2]}"
    case "$class:$subclass:$protocol" in
       Audio:* )
-         dev_icon="audio-card"
+         dev_icon="$icon_dir/audio-card.svg"
       ;;
       Communications:Abstract* )
-         dev_icon="network-modem"
+         dev_icon="$icon_dir/network-modem.svg"
       ;;
       Communications:Ethernet* )
-         dev_icon="network-wired"
+         dev_icon="$icon_dir/network-wired.svg"
       ;;
       Human_Interface_Device:*:Keyboard )
-         dev_icon="input-keyboard"
+         dev_icon="$icon_dir/input-keyboard.svg"
       ;;
       Human_Interface_Device:*:Mouse )
-         dev_icon="input-mouse"
+         dev_icon="$icon_dir/input-mouse.svg"
       ;;
       Mass_Storage:RBC:* )
-         dev_icon="drive-removable-media-usb"
+         dev_icon="$icon_dir/drive-removable-media.svg"
       ;;
       Mass_Storage:Floppy:* )
-         dev_icon="media-floppy"
+         dev_icon="$icon_dir/media-floppy.svg"
       ;;
       Mass_Storage:SCSI:* )
-         dev_icon="drive-removable-media-usb"
+         dev_icon="$icon_dir/drive-removable-media.svg"
       ;;
       Printer:* )
-         dev_icon="printer"
+         dev_icon="$icon_dir/printer.svg"
       ;;
       Hub:* )
-         dev_icon="emblem-shared"
+         dev_icon="$icon_dir/emblem-shared.svg"
       ;;
       Video:* )
-         dev_icon="camera-web"
+         dev_icon="$icon_dir/camera-web.svg"
       ;;
       Xbox:Controller:* )
-         dev_icon="input-gaming"
+         dev_icon="$icon_dir/input-gaming.svg"
       ;;
       Wireless:Radio_Frequency:Bluetooth )
-         dev_icon="network-bluetooth"
+         dev_icon="$icon_dir/network-bluetooth.svg"
       ;;
-      *) dev_icon="drive-removable-media-usb" ;;
+      *) dev_icon="$icon_dir/drive-removable-media.svg" ;;
    esac
 }
 
@@ -157,11 +159,8 @@ notify_unplugged() {
 }
 
 (
-   flock -w 10 200 || exit 1
+   flock -w 10 200||exit 1
    case "$action" in
-      reboot )
-         rm -rf "$devlist_file"
-         ;;
       add )
          if [[ "$bus_num" != "" && "$dev_num" != "" ]]
             then
