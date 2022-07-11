@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.2.r2
+# v0.2.r3
 un_dir="/usr/share/udev-notify"
 icon_dir="$un_dir/icons"
 sounds_dir="$un_dir/sounds"
@@ -75,6 +75,9 @@ get_device_icon() {
       ;;
       Wireless:Radio_Frequency:Bluetooth )
          dev_icon="$icon_dir/network-bluetooth.svg"
+      ;;
+      Wireless:Radio_Frequency:RNDIS )
+         dev_icon="$icon_dir/network-wired.svg"
       ;;
       *) dev_icon="$icon_dir/drive-removable-media.svg" ;;
    esac
@@ -168,10 +171,12 @@ notify_unplugged() {
                 dev_num="$(printf %03d $dev_num)"
                 dev_info="$(lsusb -D "/dev/bus/usb/$bus_num/$dev_num")"
                 dev_name="$(echo "$dev_info"|grep -m1 '^Device:'|cut -d' ' -f4-)"
-                dev_title="$(echo "$(echo "$dev_info"|sed "s/$(echo "$dev_name"|sed 's/\[/\\[/g;s/\]/\\]/g')//g"|\
-                             grep '^Device:\|bInterfaceClass\|bInterfaceSubClass\|bInterfaceProtocol'|awk '!seen[$0]++'|\
-                             sed 's/bInterface//g'|sed 's/^\s*\([a-zA-Z]\+\):*\s*[0-9]*\s*/<b>\1:<\/b> /'|\
-                             sed 's/Device:<\/b> ID/Vendor\/Product ID:<\/b>/'|\
+                vp_id="$(echo "$dev_info"|grep -m1 '^Device:'|awk '{print$3}')"
+                dev_title="$(echo "<b>Vendor / Product ID:</b> $vp_id###$(echo "$dev_info"|\
+                             sed 's/^ *//'|sed '/^[[:space:]]*$/d'|sed 's/[[:blank:]]*$//'|awk '!($2="")'|\
+                             grep -m3 'bInterfaceClass\|bInterfaceSubClass\|bInterfaceProtocol'|awk '!seen[$0]++'|\
+                             grep -v '^bInterfaceClass $'|grep -v '^bInterfaceSubClass $'|grep -v '^bInterfaceProtocol $'|\
+                             grep -v 'Vendor Specific'|sed 's/bInterface//g'|sed 's/^\s*\([a-zA-Z]\+\):*\s*[0-9]*\s*/<b>\1:<\/b> /'|\
                              awk 1 ORS='###')<b>Bus</b> '$bus_num' <b>Device</b> '$dev_num'")"
                 escaped_dev_path="$(echo "$dev_path"|sed 's/[\/&*.^$]/\\\&/g')"
                 sed -i "s#^\([0-9]\{3\}:\)\{2\}\($escaped_dev_path\)#$bus_num:$dev_num:$dev_path#" "$devlist_file"
