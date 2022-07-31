@@ -4,7 +4,7 @@
 ## Screenshots:
 ![image](https://user-images.githubusercontent.com/57139938/178160053-c31471aa-5786-4c5c-b946-3ba19294254f.png)![image](https://user-images.githubusercontent.com/57139938/178160061-19f5d212-e9b8-4ab6-b03a-f5d1e453ca22.png)
 
-## Dependences:
+## Dependencies:
 ```
 usbutils
 libnotify
@@ -34,3 +34,4 @@ make install
 ```
 yay --needed --noconfirm -S base-devel udev-notify-git
 ```
+* **[Or install DEB package](https://github.com/VHSgunzo/udev-notify/releases)**
