@@ -101,14 +101,14 @@ show_visual_notification() {
          cur_user_id="$(id -u "$cur_user")"
          export XDG_RUNTIME_DIR="/run/user/$cur_user_id"
          export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$cur_user_id/bus"
-         export DISPLAY="$(who|grep "$cur_user"|grep 'tty' -m1|grep -o '(.*)$'|sed 's/(//;s/)//')"
+         export DISPLAY="$(who|grep "$cur_user"|grep 'tty' -m1|grep -o '\(.*\)$'|sed 's/(//;s/)//')"
          export XAUTHORITY="/home/$cur_user/.Xauthority"
          su "$cur_user" -c "notify-send -i '$dev_icon' -a '$header' '$dev_name' '$text'"
    done
 }
 
 print_logged_users() {
-   who|grep "(.*)"|sed 's/^\s*\(\S\+\).*/\1/g'|uniq|sort
+   who|grep "\(.*\)"|sed 's/^\s*\(\S\+\).*/\1/g'|uniq|sort
 }
 
 sound_or_speak() {
